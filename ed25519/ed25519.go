@@ -3,7 +3,14 @@ package ed25519
 import (
 	"crypto/ed25519"
 	"encoding/pem"
+	"errors"
+	"io/ioutil"
 	"os"
+)
+
+const (
+	PRIVATE_KEY = "ED25519 PRIVATE KEY"
+	PUBLIC_KEY  = "PUBLIC KEY"
 )
 
 func GenerateKeyFile(privateKeyFile, publickKeyFile string) error {
@@ -54,7 +61,7 @@ func GenerateKeyPemFile(privateKeyFile, publickKeyFile string) error {
 	defer prifile.Close()
 
 	priblock := pem.Block{
-		Type:  "ED25519 PRIVATE KEY",
+		Type:  PRIVATE_KEY,
 		Bytes: pri,
 	}
 
@@ -69,7 +76,7 @@ func GenerateKeyPemFile(privateKeyFile, publickKeyFile string) error {
 	defer pubfile.Close()
 
 	pubblock := pem.Block{
-		Type:  "PUBLIC KEY",
+		Type:  PUBLIC_KEY,
 		Bytes: pub,
 	}
 
@@ -78,4 +85,81 @@ func GenerateKeyPemFile(privateKeyFile, publickKeyFile string) error {
 	}
 
 	return nil
+}
+
+func PrivateKeyFromPem(path string) (ed25519.PrivateKey, error) {
+	bs, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	b, _ := pem.Decode(bs)
+	if b == nil {
+		if len(bs) == ed25519.PrivateKeySize {
+			return ed25519.PrivateKey(bs), err
+		} else {
+			return nil, errors.New("data lenth error")
+		}
+
+	}
+	switch b.Type {
+	case PRIVATE_KEY:
+		if len(b.Bytes) == ed25519.PrivateKeySize {
+			return ed25519.PrivateKey(b.Bytes), err
+		} else {
+			return nil, errors.New("data lenth error")
+		}
+	}
+
+	return nil, errors.New("data error")
+
+}
+
+func PublicKeyFromPem(path string) (ed25519.PublicKey, error) {
+	bs, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	b, _ := pem.Decode(bs)
+	if b == nil {
+		if len(bs) == ed25519.PublicKeySize {
+			return ed25519.PublicKey(bs), err
+		} else {
+			return nil, errors.New("data lenth error")
+		}
+	}
+	switch b.Type {
+	case PUBLIC_KEY:
+		if len(b.Bytes) == ed25519.PublicKeySize {
+			return ed25519.PublicKey(b.Bytes), err
+		} else {
+			return nil, errors.New("data lenth error")
+		}
+
+	}
+
+	return nil, errors.New("data error")
+}
+
+func Sign(privateKey ed25519.PrivateKey, message []byte) []byte {
+	return ed25519.Sign(privateKey, message)
+}
+
+func Verify(publicKey ed25519.PublicKey, message, sig []byte) bool {
+	return ed25519.Verify(publicKey, message, sig)
+}
+
+func SignFile(path string, message []byte) ([]byte, error) {
+	key, err := PrivateKeyFromPem(path)
+	if err != nil {
+		return nil, err
+	}
+	return ed25519.Sign(key, message), nil
+}
+
+func VerifyFile(path string, message, sig []byte) (bool, error) {
+	key, err := PublicKeyFromPem(path)
+	if err != nil {
+		return false, err
+	}
+	return ed25519.Verify(key, message, sig), nil
 }

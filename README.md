@@ -11,6 +11,6 @@ aes 完成
 md5 完成 
 hmac todo    
 sha1 完成   
-sha256 todo   
-sha512  todo   
+sha256 完成   
+sha512  完成   
 ----------

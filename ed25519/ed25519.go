@@ -204,3 +204,24 @@ func VerifyFile(path string, message, sig []byte) (bool, error) {
 	}
 	return ed25519.Verify(key, message, sig), nil
 }
+
+func SignString(privateKey ed25519.PrivateKey, message string) (string, error) {
+	m, err := base64.StdEncoding.DecodeString(message)
+	if err != nil {
+		return message, err
+	}
+	s := ed25519.Sign(privateKey, m)
+	return base64.StdEncoding.EncodeToString(s), nil
+}
+
+func VerifyString(publicKey ed25519.PublicKey, message, sig string) (bool, error) {
+	m, err := base64.StdEncoding.DecodeString(message)
+	if err != nil {
+		return false, err
+	}
+	s, err := base64.StdEncoding.DecodeString(sig)
+	if err != nil {
+		return false, err
+	}
+	return ed25519.Verify(publicKey, m, s), nil
+}

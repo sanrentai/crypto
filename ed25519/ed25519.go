@@ -2,6 +2,7 @@ package ed25519
 
 import (
 	"crypto/ed25519"
+	"encoding/base64"
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
@@ -104,7 +105,7 @@ func PrivateKeyFromPem(path string) (ed25519.PrivateKey, error) {
 	switch b.Type {
 	case PRIVATE_KEY:
 		if len(b.Bytes) == ed25519.PrivateKeySize {
-			return ed25519.PrivateKey(b.Bytes), err
+			return ed25519.PrivateKey(b.Bytes), nil
 		} else {
 			return nil, errors.New("data lenth error")
 		}
@@ -130,7 +131,7 @@ func PublicKeyFromPem(path string) (ed25519.PublicKey, error) {
 	switch b.Type {
 	case PUBLIC_KEY:
 		if len(b.Bytes) == ed25519.PublicKeySize {
-			return ed25519.PublicKey(b.Bytes), err
+			return ed25519.PublicKey(b.Bytes), nil
 		} else {
 			return nil, errors.New("data lenth error")
 		}
@@ -138,6 +139,46 @@ func PublicKeyFromPem(path string) (ed25519.PublicKey, error) {
 	}
 
 	return nil, errors.New("data error")
+}
+
+func PublicKeyFromB64(b64 string) (ed25519.PublicKey, error) {
+	bs, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		return nil, err
+	}
+	if len(bs) == ed25519.PublicKeySize {
+		return ed25519.PublicKey(bs), nil
+	} else {
+		return nil, errors.New("data lenth error")
+	}
+}
+
+func PrivateKeyFromB64(b64 string) (ed25519.PrivateKey, error) {
+	bs, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		return nil, err
+	}
+	if len(bs) == ed25519.PrivateKeySize {
+		return ed25519.PrivateKey(bs), nil
+	} else {
+		return nil, errors.New("data lenth error")
+	}
+}
+
+func PublicKey(bs []byte) (ed25519.PublicKey, error) {
+	if len(bs) == ed25519.PublicKeySize {
+		return ed25519.PublicKey(bs), nil
+	} else {
+		return nil, errors.New("data lenth error")
+	}
+}
+
+func PrivateKey(bs []byte) (ed25519.PrivateKey, error) {
+	if len(bs) == ed25519.PrivateKeySize {
+		return ed25519.PrivateKey(bs), nil
+	} else {
+		return nil, errors.New("data lenth error")
+	}
 }
 
 func Sign(privateKey ed25519.PrivateKey, message []byte) []byte {

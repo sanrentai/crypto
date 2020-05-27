@@ -14,13 +14,15 @@ import (
 	"errors"
 )
 
+type DesPadding int
+
 const (
-	NOPADDING = iota
+	NOPADDING DesPadding = iota
 	PKCS5PADDING
 )
 
 // EncryptECB encrypts <plainText> using ECB mode.
-func EncryptECB(plainText []byte, key []byte, padding int) ([]byte, error) {
+func EncryptECB(plainText []byte, key []byte, padding DesPadding) ([]byte, error) {
 	text, err := Padding(plainText, padding)
 	if err != nil {
 		return nil, err
@@ -42,7 +44,7 @@ func EncryptECB(plainText []byte, key []byte, padding int) ([]byte, error) {
 }
 
 // DecryptECB decrypts <cipherText> using ECB mode.
-func DecryptECB(cipherText []byte, key []byte, padding int) ([]byte, error) {
+func DecryptECB(cipherText []byte, key []byte, padding DesPadding) ([]byte, error) {
 	text := make([]byte, len(cipherText))
 	block, err := des.NewCipher(key)
 	if err != nil {
@@ -64,7 +66,7 @@ func DecryptECB(cipherText []byte, key []byte, padding int) ([]byte, error) {
 
 // EncryptECBTriple encrypts <plainText> using TripleDES and ECB mode.
 // The length of the <key> should be either 16 or 24 bytes.
-func EncryptECBTriple(plainText []byte, key []byte, padding int) ([]byte, error) {
+func EncryptECBTriple(plainText []byte, key []byte, padding DesPadding) ([]byte, error) {
 	if len(key) != 16 && len(key) != 24 {
 		return nil, errors.New("key length error")
 	}
@@ -98,7 +100,7 @@ func EncryptECBTriple(plainText []byte, key []byte, padding int) ([]byte, error)
 
 // DecryptECBTriple decrypts <cipherText> using TripleDES and ECB mode.
 // The length of the <key> should be either 16 or 24 bytes.
-func DecryptECBTriple(cipherText []byte, key []byte, padding int) ([]byte, error) {
+func DecryptECBTriple(cipherText []byte, key []byte, padding DesPadding) ([]byte, error) {
 	if len(key) != 16 && len(key) != 24 {
 		return nil, errors.New("key length error")
 	}
@@ -131,7 +133,7 @@ func DecryptECBTriple(cipherText []byte, key []byte, padding int) ([]byte, error
 }
 
 // EncryptCBC encrypts <plainText> using CBC mode.
-func EncryptCBC(plainText []byte, key []byte, iv []byte, padding int) ([]byte, error) {
+func EncryptCBC(plainText []byte, key []byte, iv []byte, padding DesPadding) ([]byte, error) {
 	block, err := des.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -154,7 +156,7 @@ func EncryptCBC(plainText []byte, key []byte, iv []byte, padding int) ([]byte, e
 }
 
 // DecryptCBC decrypts <cipherText> using CBC mode.
-func DecryptCBC(cipherText []byte, key []byte, iv []byte, padding int) ([]byte, error) {
+func DecryptCBC(cipherText []byte, key []byte, iv []byte, padding DesPadding) ([]byte, error) {
 	block, err := des.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -177,7 +179,7 @@ func DecryptCBC(cipherText []byte, key []byte, iv []byte, padding int) ([]byte, 
 }
 
 // EncryptCBCTriple encrypts <plainText> using TripleDES and CBC mode.
-func EncryptCBCTriple(plainText []byte, key []byte, iv []byte, padding int) ([]byte, error) {
+func EncryptCBCTriple(plainText []byte, key []byte, iv []byte, padding DesPadding) ([]byte, error) {
 	if len(key) != 16 && len(key) != 24 {
 		return nil, errors.New("key length invalid")
 	}
@@ -212,7 +214,7 @@ func EncryptCBCTriple(plainText []byte, key []byte, iv []byte, padding int) ([]b
 }
 
 // DecryptCBCTriple decrypts <cipherText> using TripleDES and CBC mode.
-func DecryptCBCTriple(cipherText []byte, key []byte, iv []byte, padding int) ([]byte, error) {
+func DecryptCBCTriple(cipherText []byte, key []byte, iv []byte, padding DesPadding) ([]byte, error) {
 	if len(key) != 16 && len(key) != 24 {
 		return nil, errors.New("key length invalid")
 	}
@@ -258,7 +260,7 @@ func UnPaddingPKCS5(text []byte) []byte {
 	return text[:(length - padText)]
 }
 
-func Padding(text []byte, padding int) ([]byte, error) {
+func Padding(text []byte, padding DesPadding) ([]byte, error) {
 	switch padding {
 	case NOPADDING:
 		if len(text)%8 != 0 {
@@ -273,7 +275,7 @@ func Padding(text []byte, padding int) ([]byte, error) {
 	return text, nil
 }
 
-func UnPadding(text []byte, padding int) ([]byte, error) {
+func UnPadding(text []byte, padding DesPadding) ([]byte, error) {
 	switch padding {
 	case NOPADDING:
 		if len(text)%8 != 0 {

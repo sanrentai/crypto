@@ -42,7 +42,7 @@ func Encrypt(msg, privateKeyPath, publicKeyPath string) (string, error) {
 		return "", err
 	}
 	// 使用des密钥加密原文
-	c, err := des.EncryptECB([]byte(msg), desKey, des.PKCS5PADDING)
+	c, err := des.EncryptECB([]byte(msg), desKey[:8], des.PKCS5PADDING)
 	if err != nil {
 		return "", err
 	}
@@ -79,7 +79,7 @@ func Decrypt(msg, privateKeyPath, publicKeyPath string) (string, error) {
 		return "", err
 	}
 	// des解密获得原文
-	yw, err := des.DecryptECB(contentBytes, desKey, des.PKCS5PADDING)
+	yw, err := des.DecryptECB(contentBytes, desKey[:8], des.PKCS5PADDING)
 	if err != nil {
 		return "", err
 	}

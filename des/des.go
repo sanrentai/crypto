@@ -23,6 +23,9 @@ const (
 
 // EncryptECB encrypts <plainText> using ECB mode.
 func EncryptECB(plainText []byte, key []byte, padding DesPadding) ([]byte, error) {
+	if len(key) < 8 {
+		return nil, des.KeySizeError(len(key))
+	}
 	text, err := Padding(plainText, padding)
 	if err != nil {
 		return nil, err
@@ -30,7 +33,8 @@ func EncryptECB(plainText []byte, key []byte, padding DesPadding) ([]byte, error
 
 	cipherText := make([]byte, len(text))
 
-	block, err := des.NewCipher(key)
+	deskey := key[:8]
+	block, err := des.NewCipher(deskey)
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +49,12 @@ func EncryptECB(plainText []byte, key []byte, padding DesPadding) ([]byte, error
 
 // DecryptECB decrypts <cipherText> using ECB mode.
 func DecryptECB(cipherText []byte, key []byte, padding DesPadding) ([]byte, error) {
+	if len(key) < 8 {
+		return nil, des.KeySizeError(len(key))
+	}
 	text := make([]byte, len(cipherText))
-	block, err := des.NewCipher(key)
+	deskey := key[:8]
+	block, err := des.NewCipher(deskey)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +142,11 @@ func DecryptECBTriple(cipherText []byte, key []byte, padding DesPadding) ([]byte
 
 // EncryptCBC encrypts <plainText> using CBC mode.
 func EncryptCBC(plainText []byte, key []byte, iv []byte, padding DesPadding) ([]byte, error) {
-	block, err := des.NewCipher(key)
+	if len(key) < 8 {
+		return nil, des.KeySizeError(len(key))
+	}
+	deskey := key[:8]
+	block, err := des.NewCipher(deskey)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +169,11 @@ func EncryptCBC(plainText []byte, key []byte, iv []byte, padding DesPadding) ([]
 
 // DecryptCBC decrypts <cipherText> using CBC mode.
 func DecryptCBC(cipherText []byte, key []byte, iv []byte, padding DesPadding) ([]byte, error) {
-	block, err := des.NewCipher(key)
+	if len(key) < 8 {
+		return nil, des.KeySizeError(len(key))
+	}
+	deskey := key[:8]
+	block, err := des.NewCipher(deskey)
 	if err != nil {
 		return nil, err
 	}

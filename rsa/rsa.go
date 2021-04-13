@@ -179,6 +179,34 @@ func Sign(path string, msg []byte) ([]byte, error) {
 	return rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA1, bytes)
 }
 
+func SignSHA256(path string, msg []byte) ([]byte, error) {
+	key, err := ParsePrivateKey(path)
+	if err != nil {
+		return nil, err
+	}
+	hash := crypto.Hash.New(crypto.SHA256) //进行SHA256的散列
+	hash.Write(msg)
+	bytes := hash.Sum(nil)
+	return rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, bytes)
+}
+
+// RSA验签
+// path 公钥匙文件地址
+// msg 解密的数据
+// sign 签名的数据
+func VerifySHA256(path string, msg, sign []byte) bool {
+	//计算消息散列值
+	hash := crypto.Hash.New(crypto.SHA256)
+	hash.Write(msg)
+	bytes := hash.Sum(nil)
+	key, err := ParsePublicKey(path)
+	if err != nil {
+		return false
+	}
+	err = rsa.VerifyPKCS1v15(key, crypto.SHA256, bytes, sign)
+	return err == nil
+}
+
 // RSA验签
 // path 公钥匙文件地址
 // msg 解密的数据

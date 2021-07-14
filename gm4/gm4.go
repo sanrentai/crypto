@@ -1,6 +1,7 @@
 package gm4
 
 import (
+	"bytes"
 	"crypto/cipher"
 	"encoding/binary"
 	"errors"
@@ -221,41 +222,42 @@ func f3(x []uint32, rk uint32) uint32 {
 	return x[3] ^ t(x[0]^x[1]^x[2]^rk)
 }
 
-// 输入的plainText长度必须是BlockSize(16)的整数倍，也就是调用该方法前调用方需先加好padding，
-// 可调用util.PKCS5Padding()方法进行加padding操作
-func ECBEncrypt(key, plainText []byte) (cipherText []byte, err error) {
-	plainTextLen := len(plainText)
-	if plainTextLen%BlockSize != 0 {
-		return nil, errors.New("input not full blocks")
-	}
-
+// 输入的plainText
+func ECBEncryptPKCS7padding(key, plainText []byte) (cipherText []byte, err error) {
+	inData := pkcs7Padding(plainText)
+	cipherText = make([]byte, len(inData))
 	c, err := NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-	cipherText = make([]byte, plainTextLen)
-	for i := 0; i < plainTextLen; i += BlockSize {
-		c.Encrypt(cipherText[i:i+BlockSize], plainText[i:i+BlockSize])
+
+	for i := 0; i < len(inData)/16; i++ {
+		in_tmp := inData[i*16 : i*16+16]
+		out_tmp := make([]byte, 16)
+		c.Encrypt(out_tmp, in_tmp)
+		copy(cipherText[i*16:i*16+16], out_tmp)
 	}
 	return cipherText, nil
 }
 
-// 输出的plainText是加padding的明文，调用方需要自己去padding，
-// 可调用util.PKCS5UnPadding()方法进行去padding操作
-func ECBDecrypt(key, cipherText []byte) (plainText []byte, err error) {
+// 输出的plainText是加padding的明文，
+func ECBDecryptPKCS7padding(key, cipherText []byte) (plainText []byte, err error) {
 	cipherTextLen := len(cipherText)
 	if cipherTextLen%BlockSize != 0 {
 		return nil, errors.New("input not full blocks")
 	}
-
 	c, err := NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-	plainText = make([]byte, cipherTextLen)
-	for i := 0; i < cipherTextLen; i += BlockSize {
-		c.Decrypt(plainText[i:i+BlockSize], cipherText[i:i+BlockSize])
+	out := make([]byte, len(cipherText))
+	for i := 0; i < len(cipherText)/16; i++ {
+		in_tmp := cipherText[i*16 : i*16+16]
+		out_tmp := make([]byte, 16)
+		c.Decrypt(out_tmp, in_tmp)
+		copy(out[i*16:i*16+16], out_tmp)
 	}
+	plainText, _ = pkcs7UnPadding(out)
 	return plainText, nil
 }
 
@@ -293,4 +295,27 @@ func CBCDecrypt(key, iv, cipherText []byte) (plainText []byte, err error) {
 	plainText = make([]byte, len(cipherText))
 	decrypter.CryptBlocks(plainText, cipherText)
 	return plainText, nil
+}
+
+func pkcs7Padding(src []byte) []byte {
+	padding := BlockSize - len(src)%BlockSize
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(src, padtext...)
+}
+
+func pkcs7UnPadding(src []byte) ([]byte, error) {
+	length := len(src)
+	unpadding := int(src[length-1])
+	if unpadding > BlockSize || unpadding == 0 {
+		return nil, errors.New("Invalid pkcs7 padding (unpadding > BlockSize || unpadding == 0)")
+	}
+
+	pad := src[len(src)-unpadding:]
+	for i := 0; i < unpadding; i++ {
+		if pad[i] != byte(unpadding) {
+			return nil, errors.New("Invalid pkcs7 padding (pad[i] != unpadding)")
+		}
+	}
+
+	return src[:(length - unpadding)], nil
 }
